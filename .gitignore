@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.txt
+
+# Generated data and backups
+respaldos/
+*.parquet
+*.avro
+
+# OS artifacts
+Thumbs.db
+.DS_Store

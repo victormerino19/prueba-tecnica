@@ -1,0 +1,450 @@
+1,Sales Representative Intern
+2,Sales Representative Jr
+3,Sales Representative Mid
+4,Sales Representative Sr
+5,Sales Representative Lead
+6,Account Executive Intern
+7,Account Executive Jr
+8,Account Executive Mid
+9,Account Executive Sr
+10,Account Executive Lead
+11,Business Development Specialist Intern
+12,Business Development Specialist Jr
+13,Business Development Specialist Mid
+14,Business Development Specialist Sr
+15,Business Development Specialist Lead
+16,Sales Manager Intern
+17,Sales Manager Jr
+18,Sales Manager Mid
+19,Sales Manager Sr
+20,Sales Manager Lead
+21,Territory Manager Intern
+22,Territory Manager Jr
+23,Territory Manager Mid
+24,Territory Manager Sr
+25,Territory Manager Lead
+26,Inside Sales Associate Intern
+27,Inside Sales Associate Jr
+28,Inside Sales Associate Mid
+29,Inside Sales Associate Sr
+30,Inside Sales Associate Lead
+31,Marketing Coordinator Intern
+32,Marketing Coordinator Jr
+33,Marketing Coordinator Mid
+34,Marketing Coordinator Sr
+35,Marketing Coordinator Lead
+36,Digital Marketing Specialist Intern
+37,Digital Marketing Specialist Jr
+38,Digital Marketing Specialist Mid
+39,Digital Marketing Specialist Sr
+40,Digital Marketing Specialist Lead
+41,SEO Analyst Intern
+42,SEO Analyst Jr
+43,SEO Analyst Mid
+44,SEO Analyst Sr
+45,SEO Analyst Lead
+46,Content Strategist Intern
+47,Content Strategist Jr
+48,Content Strategist Mid
+49,Content Strategist Sr
+50,Content Strategist Lead
+51,Social Media Manager Intern
+52,Social Media Manager Jr
+53,Social Media Manager Mid
+54,Social Media Manager Sr
+55,Social Media Manager Lead
+56,Brand Manager Intern
+57,Brand Manager Jr
+58,Brand Manager Mid
+59,Brand Manager Sr
+60,Brand Manager Lead
+61,Support Agent Intern
+62,Support Agent Jr
+63,Support Agent Mid
+64,Support Agent Sr
+65,Support Agent Lead
+66,Technical Support Specialist Intern
+67,Technical Support Specialist Jr
+68,Technical Support Specialist Mid
+69,Technical Support Specialist Sr
+70,Technical Support Specialist Lead
+71,Help Desk Analyst Intern
+72,Help Desk Analyst Jr
+73,Help Desk Analyst Mid
+74,Help Desk Analyst Sr
+75,Help Desk Analyst Lead
+76,Support Engineer Intern
+77,Support Engineer Jr
+78,Support Engineer Mid
+79,Support Engineer Sr
+80,Support Engineer Lead
+81,Customer Success Engineer Intern
+82,Customer Success Engineer Jr
+83,Customer Success Engineer Mid
+84,Customer Success Engineer Sr
+85,Customer Success Engineer Lead
+86,Support Team Lead Intern
+87,Support Team Lead Jr
+88,Support Team Lead Mid
+89,Support Team Lead Sr
+90,Support Team Lead Lead
+91,HR Assistant Intern
+92,HR Assistant Jr
+93,HR Assistant Mid
+94,HR Assistant Sr
+95,HR Assistant Lead
+96,HR Generalist Intern
+97,HR Generalist Jr
+98,HR Generalist Mid
+99,HR Generalist Sr
+100,HR Generalist Lead
+101,Recruiter Intern
+102,Recruiter Jr
+103,Recruiter Mid
+104,Recruiter Sr
+105,Recruiter Lead
+106,HR Manager Intern
+107,HR Manager Jr
+108,HR Manager Mid
+109,HR Manager Sr
+110,HR Manager Lead
+111,Talent Acquisition Specialist Intern
+112,Talent Acquisition Specialist Jr
+113,Talent Acquisition Specialist Mid
+114,Talent Acquisition Specialist Sr
+115,Talent Acquisition Specialist Lead
+116,Compensation Analyst Intern
+117,Compensation Analyst Jr
+118,Compensation Analyst Mid
+119,Compensation Analyst Sr
+120,Compensation Analyst Lead
+121,Financial Analyst Intern
+122,Financial Analyst Jr
+123,Financial Analyst Mid
+124,Financial Analyst Sr
+125,Financial Analyst Lead
+126,Accountant Intern
+127,Accountant Jr
+128,Accountant Mid
+129,Accountant Sr
+130,Accountant Lead
+131,Accounts Payable Specialist Intern
+132,Accounts Payable Specialist Jr
+133,Accounts Payable Specialist Mid
+134,Accounts Payable Specialist Sr
+135,Accounts Payable Specialist Lead
+136,Accounts Receivable Specialist Intern
+137,Accounts Receivable Specialist Jr
+138,Accounts Receivable Specialist Mid
+139,Accounts Receivable Specialist Sr
+140,Accounts Receivable Specialist Lead
+141,Finance Manager Intern
+142,Finance Manager Jr
+143,Finance Manager Mid
+144,Finance Manager Sr
+145,Finance Manager Lead
+146,Controller Intern
+147,Controller Jr
+148,Controller Mid
+149,Controller Sr
+150,Controller Lead
+151,Software Engineer Intern
+152,Software Engineer Jr
+153,Software Engineer Mid
+154,Software Engineer Sr
+155,Software Engineer Lead
+156,DevOps Engineer Intern
+157,DevOps Engineer Jr
+158,DevOps Engineer Mid
+159,DevOps Engineer Sr
+160,DevOps Engineer Lead
+161,QA Engineer Intern
+162,QA Engineer Jr
+163,QA Engineer Mid
+164,QA Engineer Sr
+165,QA Engineer Lead
+166,Frontend Developer Intern
+167,Frontend Developer Jr
+168,Frontend Developer Mid
+169,Frontend Developer Sr
+170,Frontend Developer Lead
+171,Backend Developer Intern
+172,Backend Developer Jr
+173,Backend Developer Mid
+174,Backend Developer Sr
+175,Backend Developer Lead
+176,Full Stack Developer Intern
+177,Full Stack Developer Jr
+178,Full Stack Developer Mid
+179,Full Stack Developer Sr
+180,Full Stack Developer Lead
+181,IT Support Specialist Intern
+182,IT Support Specialist Jr
+183,IT Support Specialist Mid
+184,IT Support Specialist Sr
+185,IT Support Specialist Lead
+186,Systems Administrator Intern
+187,Systems Administrator Jr
+188,Systems Administrator Mid
+189,Systems Administrator Sr
+190,Systems Administrator Lead
+191,Network Engineer Intern
+192,Network Engineer Jr
+193,Network Engineer Mid
+194,Network Engineer Sr
+195,Network Engineer Lead
+196,IT Manager Intern
+197,IT Manager Jr
+198,IT Manager Mid
+199,IT Manager Sr
+200,IT Manager Lead
+201,Security Analyst Intern
+202,Security Analyst Jr
+203,Security Analyst Mid
+204,Security Analyst Sr
+205,Security Analyst Lead
+206,Database Administrator Intern
+207,Database Administrator Jr
+208,Database Administrator Mid
+209,Database Administrator Sr
+210,Database Administrator Lead
+211,Customer Service Representative Intern
+212,Customer Service Representative Jr
+213,Customer Service Representative Mid
+214,Customer Service Representative Sr
+215,Customer Service Representative Lead
+216,Customer Service Supervisor Intern
+217,Customer Service Supervisor Jr
+218,Customer Service Supervisor Mid
+219,Customer Service Supervisor Sr
+220,Customer Service Supervisor Lead
+221,Customer Experience Manager Intern
+222,Customer Experience Manager Jr
+223,Customer Experience Manager Mid
+224,Customer Experience Manager Sr
+225,Customer Experience Manager Lead
+226,Call Center Agent Intern
+227,Call Center Agent Jr
+228,Call Center Agent Mid
+229,Call Center Agent Sr
+230,Call Center Agent Lead
+231,Customer Success Manager Intern
+232,Customer Success Manager Jr
+233,Customer Success Manager Mid
+234,Customer Success Manager Sr
+235,Customer Success Manager Lead
+236,Retention Specialist Intern
+237,Retention Specialist Jr
+238,Retention Specialist Mid
+239,Retention Specialist Sr
+240,Retention Specialist Lead
+241,Operations Analyst Intern
+242,Operations Analyst Jr
+243,Operations Analyst Mid
+244,Operations Analyst Sr
+245,Operations Analyst Lead
+246,Operations Coordinator Intern
+247,Operations Coordinator Jr
+248,Operations Coordinator Mid
+249,Operations Coordinator Sr
+250,Operations Coordinator Lead
+251,Operations Manager Intern
+252,Operations Manager Jr
+253,Operations Manager Mid
+254,Operations Manager Sr
+255,Operations Manager Lead
+256,Supply Chain Analyst Intern
+257,Supply Chain Analyst Jr
+258,Supply Chain Analyst Mid
+259,Supply Chain Analyst Sr
+260,Supply Chain Analyst Lead
+261,Process Improvement Specialist Intern
+262,Process Improvement Specialist Jr
+263,Process Improvement Specialist Mid
+264,Process Improvement Specialist Sr
+265,Process Improvement Specialist Lead
+266,Operations Planner Intern
+267,Operations Planner Jr
+268,Operations Planner Mid
+269,Operations Planner Sr
+270,Operations Planner Lead
+271,Paralegal Intern
+272,Paralegal Jr
+273,Paralegal Mid
+274,Paralegal Sr
+275,Paralegal Lead
+276,Legal Counsel Intern
+277,Legal Counsel Jr
+278,Legal Counsel Mid
+279,Legal Counsel Sr
+280,Legal Counsel Lead
+281,Legal Assistant Intern
+282,Legal Assistant Jr
+283,Legal Assistant Mid
+284,Legal Assistant Sr
+285,Legal Assistant Lead
+286,Compliance Specialist Intern
+287,Compliance Specialist Jr
+288,Compliance Specialist Mid
+289,Compliance Specialist Sr
+290,Compliance Specialist Lead
+291,Contract Manager Intern
+292,Contract Manager Jr
+293,Contract Manager Mid
+294,Contract Manager Sr
+295,Contract Manager Lead
+296,Corporate Lawyer Intern
+297,Corporate Lawyer Jr
+298,Corporate Lawyer Mid
+299,Corporate Lawyer Sr
+300,Corporate Lawyer Lead
+301,Product Manager Intern
+302,Product Manager Jr
+303,Product Manager Mid
+304,Product Manager Sr
+305,Product Manager Lead
+306,Product Owner Intern
+307,Product Owner Jr
+308,Product Owner Mid
+309,Product Owner Sr
+310,Product Owner Lead
+311,Product Analyst Intern
+312,Product Analyst Jr
+313,Product Analyst Mid
+314,Product Analyst Sr
+315,Product Analyst Lead
+316,Technical Product Manager Intern
+317,Technical Product Manager Jr
+318,Technical Product Manager Mid
+319,Technical Product Manager Sr
+320,Technical Product Manager Lead
+321,Product Designer Intern
+322,Product Designer Jr
+323,Product Designer Mid
+324,Product Designer Sr
+325,Product Designer Lead
+326,Product Marketing Manager Intern
+327,Product Marketing Manager Jr
+328,Product Marketing Manager Mid
+329,Product Marketing Manager Sr
+330,Product Marketing Manager Lead
+331,Graphic Designer Intern
+332,Graphic Designer Jr
+333,Graphic Designer Mid
+334,Graphic Designer Sr
+335,Graphic Designer Lead
+336,UI Designer Intern
+337,UI Designer Jr
+338,UI Designer Mid
+339,UI Designer Sr
+340,UI Designer Lead
+341,UX Designer Intern
+342,UX Designer Jr
+343,UX Designer Mid
+344,UX Designer Sr
+345,UX Designer Lead
+346,Visual Designer Intern
+347,Visual Designer Jr
+348,Visual Designer Mid
+349,Visual Designer Sr
+350,Visual Designer Lead
+351,Motion Graphics Designer Intern
+352,Motion Graphics Designer Jr
+353,Motion Graphics Designer Mid
+354,Motion Graphics Designer Sr
+355,Motion Graphics Designer Lead
+356,Design Lead Intern
+357,Design Lead Jr
+358,Design Lead Mid
+359,Design Lead Sr
+360,Design Lead Lead
+361,Research Analyst Intern
+362,Research Analyst Jr
+363,Research Analyst Mid
+364,Research Analyst Sr
+365,Research Analyst Lead
+366,Data Scientist Intern
+367,Data Scientist Jr
+368,Data Scientist Mid
+369,Data Scientist Sr
+370,Data Scientist Lead
+371,Market Researcher Intern
+372,Market Researcher Jr
+373,Market Researcher Mid
+374,Market Researcher Sr
+375,Market Researcher Lead
+376,Research Associate Intern
+377,Research Associate Jr
+378,Research Associate Mid
+379,Research Associate Sr
+380,Research Associate Lead
+381,Research Scientist Intern
+382,Research Scientist Jr
+383,Research Scientist Mid
+384,Research Scientist Sr
+385,Research Scientist Lead
+386,Research Coordinator Intern
+387,Research Coordinator Jr
+388,Research Coordinator Mid
+389,Research Coordinator Sr
+390,Research Coordinator Lead
+391,Administrative Assistant Intern
+392,Administrative Assistant Jr
+393,Administrative Assistant Mid
+394,Administrative Assistant Sr
+395,Administrative Assistant Lead
+396,Office Manager Intern
+397,Office Manager Jr
+398,Office Manager Mid
+399,Office Manager Sr
+400,Office Manager Lead
+401,Executive Assistant Intern
+402,Executive Assistant Jr
+403,Executive Assistant Mid
+404,Executive Assistant Sr
+405,Executive Assistant Lead
+406,Receptionist Intern
+407,Receptionist Jr
+408,Receptionist Mid
+409,Receptionist Sr
+410,Receptionist Lead
+411,Administrative Coordinator Intern
+412,Administrative Coordinator Jr
+413,Administrative Coordinator Mid
+414,Administrative Coordinator Sr
+415,Administrative Coordinator Lead
+416,Office Clerk Intern
+417,Office Clerk Jr
+418,Office Clerk Mid
+419,Office Clerk Sr
+420,Office Clerk Lead
+421,Logistics Coordinator Intern
+422,Logistics Coordinator Jr
+423,Logistics Coordinator Mid
+424,Logistics Coordinator Sr
+425,Logistics Coordinator Lead
+426,Logistics Manager Intern
+427,Logistics Manager Jr
+428,Logistics Manager Mid
+429,Logistics Manager Sr
+430,Logistics Manager Lead
+431,Supply Chain Manager Intern
+432,Supply Chain Manager Jr
+433,Supply Chain Manager Mid
+434,Supply Chain Manager Sr
+435,Supply Chain Manager Lead
+436,Warehouse Supervisor Intern
+437,Warehouse Supervisor Jr
+438,Warehouse Supervisor Mid
+439,Warehouse Supervisor Sr
+440,Warehouse Supervisor Lead
+441,Export Specialist Intern
+442,Export Specialist Jr
+443,Export Specialist Mid
+444,Export Specialist Sr
+445,Export Specialist Lead
+446,Import Specialist Intern
+447,Import Specialist Jr
+448,Import Specialist Mid
+449,Import Specialist Sr
+450,Import Specialist Lead
