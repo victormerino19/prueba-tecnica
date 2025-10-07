@@ -1,0 +1,32 @@
+# Python cache and build
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Git and VCS
+.git/
+.gitignore
+
+# Env files
+.env
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.txt
+
+# Generated data and backups
+respaldos/
+*.parquet
+*.avro
+
+# OS artifacts
+Thumbs.db
+.DS_Store

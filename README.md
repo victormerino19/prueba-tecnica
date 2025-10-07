@@ -37,6 +37,41 @@ Nota sobre UI estática
 - PostgreSQL accesible con credenciales válidas.
 - Paquetes Python: `fastapi`, `uvicorn`, `pydantic`, `psycopg2`, `python-dotenv`, `pyarrow`, `fastavro`.
 
+## Docker y Docker Compose
+- Archivos incluidos:
+  - `Dockerfile`: define la imagen de la app.
+  - `docker-compose.yml`: orquesta `app` y `db` (PostgreSQL).
+  - `.env.example`: variables requeridas; copia a `.env` y ajusta valores.
+
+### Ejecutar solo la app con Docker
+1. Copia `.env.example` a `.env` y ajusta credenciales (si usarás una DB externa).
+2. Construye la imagen:
+   - `docker build -t prueba-tecnica-app .`
+3. Ejecuta el contenedor apuntando a tu DB:
+   - `docker run --rm -p 8000:8000 --env-file .env prueba-tecnica-app`
+4. Verifica salud:
+   - `http://127.0.0.1:8000/healthz` debe responder `ok`.
+
+### Desarrollo con Compose (app + PostgreSQL)
+1. Copia `.env.example` a `.env`:
+   - `DB_NAME=prueba_tecnica`
+   - `DB_USER=prueba_user`
+   - `DB_PASSWORD=prueba_pass`
+   - El servicio `db` usará estas variables.
+2. Levanta los servicios:
+   - `docker compose up --build`
+3. Accede a la app:
+   - `http://127.0.0.1:8000/ui` y `http://127.0.0.1:8000/docs`
+4. Healthcheck:
+   - Compose verifica `http://localhost:8000/healthz`.
+5. Persistencia:
+   - Los datos de PostgreSQL se guardan en el volumen `pgdata`.
+
+Notas
+- El contenedor `app` monta el proyecto (`.:/app`) para desarrollo rápido.
+- En producción, elimina el volumen de proyecto y usa una imagen inmutable.
+- `.dockerignore` reduce el contexto de build y excluye `.env` y archivos generados.
+
 ## Configuración
 1. Crear el archivo `.env` en la raíz con estas variables:
    - `DB_NAME=tu_base`

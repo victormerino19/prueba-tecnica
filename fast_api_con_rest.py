@@ -366,6 +366,24 @@ def _on_startup():
         conexion.close()
 
 # =============================
+# Healthcheck simple
+# =============================
+@app.get("/healthz", response_class=PlainTextResponse)
+def healthz():
+    """Verifica que la app responde y que la DB está accesible."""
+    try:
+        con = obtener_conexion_db()
+        try:
+            with con.cursor() as cur:
+                cur.execute("SELECT 1")
+                _ = cur.fetchone()
+        finally:
+            con.close()
+        return "ok"
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"unhealthy: {e}")
+
+# =============================
 # Restauración desde AVRO/PARQUET y verificación de respaldos
 # =============================
 def leer_avro_archivo(ruta_archivo: str) -> List[Dict[str, Any]]:
