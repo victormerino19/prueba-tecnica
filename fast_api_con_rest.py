@@ -468,6 +468,52 @@ def metricas_contrataciones_por_trimestre(anio: int, incluir_nulos: bool = False
     finally:
         conexion.close()
 
+
+# =============================
+# Métrica: Departamentos sobre el promedio anual
+# =============================
+@app.get("/metricas/departamentos_sobre_promedio")
+def departamentos_sobre_promedio(anio: int):
+    """Lista de departamentos que contratan más empleados que el promedio en un año dado.
+
+    - Considera todos los departamentos para calcular el promedio (incluidos con 0 contrataciones).
+    - Devuelve: id del departamento, nombre y cantidad contratada.
+    - Ordena de mayor a menor según la cantidad de contrataciones.
+    """
+    conexion = obtener_conexion_db()
+    try:
+        with conexion.cursor(cursor_factory=pgextras.RealDictCursor) as cur:
+            sql = (
+                "WITH hires AS ("
+                "  SELECT d.id AS id, d.departamento AS department,"
+                "         COUNT(e.id) AS hired"
+                "  FROM departamentos d"
+                "  LEFT JOIN empleados_contratados e"
+                "    ON e.id_departamento = d.id"
+                "   AND e.fecha_hora IS NOT NULL"
+                "   AND EXTRACT(YEAR FROM e.fecha_hora) = %s"
+                "  GROUP BY d.id, d.departamento"
+                "), avg_h AS ("
+                "  SELECT AVG(hired) AS avg_hired FROM hires"
+                ")"
+                " SELECT id, department, hired"
+                " FROM hires, avg_h"
+                " WHERE hired > avg_hired"
+                " ORDER BY hired DESC"
+            )
+            cur.execute(sql, (anio,))
+            filas = cur.fetchall()
+            return [
+                {
+                    "id": int(f.get("id")),
+                    "department": f.get("department"),
+                    "hired": int(f.get("hired", 0) or 0),
+                }
+                for f in filas
+            ]
+    finally:
+        conexion.close()
+
 # =============================
 # Restauración desde AVRO/PARQUET y verificación de respaldos
 # =============================
@@ -1073,6 +1119,21 @@ def _html_ui() -> str:
       </div>
       <h3>Resultado</h3>
       <div id=\"mt-result\" class=\"result\"></div>
+    </div>
+
+    <div class=\"card\">
+      <h2>Departamentos sobre el promedio anual</h2>
+      <div class=\"row\">
+        <div>
+          <label>Año</label>
+          <input id=\"dp-anio\" type=\"number\" placeholder=\"2020\" />
+        </div>
+      </div>
+      <div style=\"margin-top:8px;\">
+        <button class=\"btn\" onclick=\"consultarDepartamentosSobrePromedio()\">Consultar /metricas/departamentos_sobre_promedio</button>
+      </div>
+      <h3>Resultado</h3>
+      <div id=\"dp-result\" class=\"result\"></div>
     </div>
 
   </body>

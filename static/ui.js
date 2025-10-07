@@ -92,6 +92,37 @@ function borrarTablaSiHayRespaldo() {
     .catch(function(e){ out.textContent = 'Error: ' + e.message; });
 }
 
+// Departamentos sobre promedio anual
+function consultarDepartamentosSobrePromedio() {
+  var apiKey = getApiKey();
+  var anioEl = document.getElementById('dp-anio');
+  var out = document.getElementById('dp-result');
+  var anio = (anioEl && anioEl.value) ? parseInt(anioEl.value, 10) : NaN;
+  if (!anio || isNaN(anio)) { out.textContent = 'Error: ingrese un año válido'; return; }
+  var url = '/metricas/departamentos_sobre_promedio?anio=' + encodeURIComponent(anio);
+  fetch(url, { headers: { 'X-API-Key': apiKey } })
+    .then(function(resp){ return resp.text().then(function(text){ return { status: resp.status, text: text }; }); })
+    .then(function(res){
+      try {
+        var data = JSON.parse(res.text);
+        if (!Array.isArray(data)) { out.textContent = 'HTTP ' + res.status + ' - ' + res.text; return; }
+        var lines = ['ID, Department, Hired'];
+        for (var i = 0; i < data.length; i++) {
+          var row = data[i];
+          lines.push([
+            String(row.id || ''),
+            String(row.department || ''),
+            String(row.hired || 0)
+          ].join(', '));
+        }
+        out.textContent = lines.join('\n');
+      } catch (e) {
+        out.textContent = 'HTTP ' + res.status + ' - ' + res.text;
+      }
+    })
+    .catch(function(e){ out.textContent = 'Error: ' + e.message; });
+}
+
 function listarRespaldos() {
   var apiKey = getApiKey();
   var tabla = document.getElementById('rs-tabla').value;

@@ -334,7 +334,7 @@ docker exec -it prueba_tecnica_db psql -U postgres -d prueba_tecnica
 - Problemas con `requirements.txt`: valida compatibilidad de versiones (ej. `pydantic==2.8.2`) y reconstruye la imagen.
 - Conexión a Azure: revisa `DB_SSLMODE=require` y reglas de firewall.
 ## Métricas del Desafío #2
-Este endpoint devuelve la cantidad de empleados contratados en un año por departamento y cargo, dividido en trimestres (Q1..Q4). La salida se ordena alfabéticamente por departamento y luego por cargo.
+ Este endpoint devuelve la cantidad de empleados contratados en un año por departamento y cargo, dividido en trimestres (Q1..Q4). La salida se ordena alfabéticamente por departamento y luego por cargo.
 
 - Endpoint:
   - `GET /metricas/contrataciones_por_trimestre?anio=2023&incluir_nulos=false`
@@ -354,3 +354,23 @@ Este endpoint devuelve la cantidad de empleados contratados en un año por depar
 Notas
 - Este endpoint requiere que `fecha_hora` esté presente en los registros para poder determinar el trimestre.
 - Si prefieres excluir filas con FKs nulas, usa `incluir_nulos=false` (por defecto).
+
+### Departamentos sobre el promedio anual
+
+Este endpoint lista los departamentos cuya cantidad de contrataciones en un año específico es superior al promedio considerando todos los departamentos.
+
+- Endpoint:
+  - `GET /metricas/departamentos_sobre_promedio?anio=2020`
+- Parámetros:
+  - `anio` (entero, requerido): el año a analizar.
+- Comportamiento:
+  - Incluye departamentos con 0 contrataciones al calcular el promedio (via `LEFT JOIN`).
+  - Ordena los resultados de mayor a menor según la cantidad de contrataciones.
+- Respuesta (ejemplo):
+
+```json
+[
+  { "id": 1, "department": "Staff", "hired": 12 },
+  { "id": 7, "department": "Supply Chain", "hired": 45 }
+]
+```
