@@ -43,6 +43,83 @@ Nota sobre UI estática
   - `docker-compose.yml`: orquesta `app` y `db` (PostgreSQL).
   - `.env.example`: variables requeridas; copia a `.env` y ajusta valores.
 
+## Evaluación rápida
+
+Para facilitar la validación del evaluador, se recomiendan dos modos de ejecución. Ambos requieren copiar `.env.example` a `.env`.
+
+### Opción A: Docker Compose (recomendado)
+
+1) Copia `.env.example` a `.env` y déjalo con valores de demo:
+
+```
+DB_NAME=prueba_tecnica
+DB_USER=prueba_user
+DB_PASSWORD=prueba_pass
+API_KEY=clave-demo-123
+EXPOSE_API_KEY_IN_UI=true
+ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+2) Levanta servicios:
+
+```
+docker compose up -d --build
+```
+
+3) Verifica salud y documentación:
+
+```
+http://127.0.0.1:8000/healthz
+http://127.0.0.1:8000/docs
+```
+
+4) En Swagger, pulsa “Authorize” y usa `X-API-Key=clave-demo-123`. La UI de pruebas está en `http://127.0.0.1:8000/ui` y prellenará la API key si `EXPOSE_API_KEY_IN_UI=true`.
+
+### Opción B: Local (sin Docker)
+
+1) Copia `.env.example` a `.env` y ajusta credenciales de tu PostgreSQL local:
+
+```
+DB_NAME=prueba_tecnica
+DB_USER=postgres        # o tu usuario
+DB_PASSWORD=<tu_password>
+DB_HOST=localhost
+DB_PORT=5432
+API_KEY=clave-demo-123
+EXPOSE_API_KEY_IN_UI=true
+ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+2) Arranca el servidor:
+
+```
+py -m uvicorn fast_api_con_rest:app --host 127.0.0.1 --port 8000 --reload
+```
+
+3) Verifica salud y usa Swagger/UI como en la opción A.
+
+### Pruebas de datos y respaldos
+
+- Importar CSV históricos con lotes y `COPY FROM`:
+
+```
+py modelos.py
+```
+
+- Generar respaldo por tabla desde la UI o con curl/PowerShell, y restaurar desde AVRO/PARQUET usando el endpoint `/restaurar`.
+
+### Seguridad
+
+- La API requiere `X-API-Key` (si `API_KEY` está definido). Sin clave, devolverá `401`.
+- CORS restringido a localhost por defecto (`ALLOWED_ORIGINS`).
+- Rate limiting moderado configurable (`RATE_LIMIT_WINDOW_SECONDS`, `RATE_LIMIT_MAX_REQUESTS`).
+
+> Nota: No uses `EXPOSE_API_KEY_IN_UI=true` en producción.
+
 ### Ejecutar solo la app con Docker
 1. Copia `.env.example` a `.env` y ajusta credenciales (si usarás una DB externa).
 2. Construye la imagen:
