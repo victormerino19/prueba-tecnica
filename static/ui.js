@@ -107,6 +107,7 @@ function consultarDepartamentosSobrePromedio() {
         var data = JSON.parse(res.text);
         if (!Array.isArray(data)) { out.textContent = 'HTTP ' + res.status + ' - ' + res.text; return; }
         var lines = ['ID, Department, Hired'];
+        var labels = [], values = [];
         for (var i = 0; i < data.length; i++) {
           var row = data[i];
           lines.push([
@@ -114,8 +115,43 @@ function consultarDepartamentosSobrePromedio() {
             String(row.department || ''),
             String(row.hired || 0)
           ].join(', '));
+          labels.push(String(row.department || ''));
+          values.push(parseInt(row.hired || 0, 10) || 0);
         }
         out.textContent = lines.join('\n');
+
+        ensureStyles();
+        ensureChartJs(function(){
+          // KPIs
+          var total = values.reduce(function(a,b){ return a + b; }, 0);
+          var maxIdx = values.reduce(function(p, c, i, arr){ return c > arr[p] ? i : p; }, 0);
+          renderKpis('dp-kpis', out, [
+            { label: 'Total contrataciones', value: String(total) },
+            { label: 'Top departamento', value: labels[maxIdx] + ' (' + values[maxIdx] + ')' },
+            { label: 'Departamentos sobre promedio', value: String(labels.length) }
+          ]);
+
+          // Gráfico principal: barras horizontales
+          var c1 = getOrCreateCanvas('dp-canvas', out);
+          renderBarChart(c1, labels, values, 'Contrataciones por departamento', true);
+
+          // Gráfico adicional 1: barras verticales del Top 10
+          var sorted = labels.map(function(lbl, idx){ return { label: lbl, value: values[idx] }; })
+            .sort(function(a,b){ return b.value - a.value; }).slice(0, 10);
+          var topLabels = sorted.map(function(x){ return x.label; });
+          var topValues = sorted.map(function(x){ return x.value; });
+          var c2 = getOrCreateCanvas('dp-canvas2', out);
+          renderBarChart(c2, topLabels, topValues, 'Top 10 departamentos', false);
+
+          // Gráfico adicional 2: Pie de distribución
+          var c3 = getOrCreateCanvas('dp-canvas3', out);
+          renderPieChart(c3, labels, values, 'Distribución de contrataciones');
+
+          // Tabla Top 10
+          renderTable('dp-table', out, ['#','Departamento','Contrataciones'],
+            topLabels.map(function(lbl, i){ return [String(i+1), lbl, String(topValues[i])]; })
+          );
+        });
       } catch (e) {
         out.textContent = 'HTTP ' + res.status + ' - ' + res.text;
       }
@@ -251,21 +287,209 @@ function consultarMetricasTrimestrales() {
         var data = JSON.parse(res.text);
         if (!Array.isArray(data)) { out.textContent = 'HTTP ' + res.status + ' - ' + res.text; return; }
         var lines = ['department, job, q1, q2, q3, q4'];
+        var t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        var combos = [];
         for (var i = 0; i < data.length; i++) {
           var row = data[i];
+          var q1 = parseInt(row.q1 || 0, 10) || 0;
+          var q2 = parseInt(row.q2 || 0, 10) || 0;
+          var q3 = parseInt(row.q3 || 0, 10) || 0;
+          var q4 = parseInt(row.q4 || 0, 10) || 0;
+          t1 += q1; t2 += q2; t3 += q3; t4 += q4;
           lines.push([
             String(row.department || ''),
             String(row.job || ''),
-            String(row.q1 || 0),
-            String(row.q2 || 0),
-            String(row.q3 || 0),
-            String(row.q4 || 0)
+            String(q1),
+            String(q2),
+            String(q3),
+            String(q4)
           ].join(', '));
+          combos.push({ department: String(row.department || ''), job: String(row.job || ''), total: q1+q2+q3+q4 });
         }
         out.textContent = lines.join('\n');
+
+        ensureStyles();
+        ensureChartJs(function(){
+          var quarters = ['Q1','Q2','Q3','Q4'];
+          var totals = [t1,t2,t3,t4];
+          // KPIs
+          var sumTot = totals.reduce(function(a,b){ return a+b; }, 0);
+          var maxQIdx = totals.reduce(function(p, c, i, arr){ return c > arr[p] ? i : p; }, 0);
+          var variation = (totals[3] - totals[0]);
+          renderKpis('mt-kpis', out, [
+            { label: 'Total contrataciones', value: String(sumTot) },
+            { label: 'Pico trimestral', value: quarters[maxQIdx] + ' (' + totals[maxQIdx] + ')' },
+            { label: 'Variación Q1→Q4', value: (variation >= 0 ? '+' : '-') + String(Math.abs(variation)) }
+          ]);
+
+          // Gráfico principal: barras trimestrales
+          var c1 = getOrCreateCanvas('mt-canvas', out);
+          renderBarChart(c1, quarters, totals, 'Contrataciones por trimestre', false);
+
+          // Gráfico adicional 1: línea de tendencia
+          var c2 = getOrCreateCanvas('mt-canvas2', out);
+          renderLineChart(c2, quarters, totals, 'Tendencia por trimestre');
+
+          // Gráfico adicional 2: pie de distribución
+          var c3 = getOrCreateCanvas('mt-canvas3', out);
+          renderPieChart(c3, quarters, totals, 'Distribución por trimestre');
+
+          // Tabla Top 10 de department-job por total
+          var topCombos = combos.sort(function(a,b){ return b.total - a.total; }).slice(0,10);
+          renderTable('mt-table', out, ['#','Departamento','Trabajo','Total'],
+            topCombos.map(function(x, i){ return [String(i+1), x.department, x.job, String(x.total)]; })
+          );
+        });
       } catch (e) {
         out.textContent = 'HTTP ' + res.status + ' - ' + res.text;
       }
     })
     .catch(function(e){ out.textContent = 'Error: ' + e.message; });
+}
+
+function ensureChartJs(callback) {
+  if (typeof window !== 'undefined' && window.Chart) { callback(); return; }
+  var existing = document.getElementById('chartjs-cdn');
+  if (!existing) {
+    var script = document.createElement('script');
+    script.id = 'chartjs-cdn';
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    script.onload = function(){ callback(); };
+    script.onerror = function(){ callback(); };
+    document.head.appendChild(script);
+  } else {
+    existing.onload = function(){ callback(); };
+    if (window.Chart) { callback(); }
+  }
+}
+
+function getOrCreateCanvas(id, outEl) {
+  var el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('canvas');
+    el.id = id;
+    el.width = 400;
+    el.height = 200;
+    if (outEl && outEl.parentNode) {
+      outEl.parentNode.insertBefore(el, outEl.nextSibling);
+    } else {
+      document.body.appendChild(el);
+    }
+  }
+  return el;
+}
+
+function renderBarChart(canvasEl, labels, data, title, horizontal) {
+  if (!window.Chart || !canvasEl) { return; }
+  if (!window._charts) { window._charts = {}; }
+  var id = canvasEl.id;
+  var prev = window._charts[id];
+  if (prev && typeof prev.destroy === 'function') { prev.destroy(); }
+  var cfg = {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label: title, data: data, backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: false,
+      scales: { x: { beginAtZero: true }, y: { beginAtZero: true } }
+    }
+  };
+  window._charts[id] = new Chart(canvasEl.getContext('2d'), cfg);
+}
+
+function renderLineChart(canvasEl, labels, data, title) {
+  if (!window.Chart || !canvasEl) { return; }
+  if (!window._charts) { window._charts = {}; }
+  var id = canvasEl.id;
+  var prev = window._charts[id];
+  if (prev && typeof prev.destroy === 'function') { prev.destroy(); }
+  var cfg = {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{ label: title, data: data, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', tension: 0.3 }]
+    },
+    options: { responsive: false, scales: { x: { beginAtZero: true }, y: { beginAtZero: true } } }
+  };
+  window._charts[id] = new Chart(canvasEl.getContext('2d'), cfg);
+}
+
+function renderPieChart(canvasEl, labels, data, title) {
+  if (!window.Chart || !canvasEl) { return; }
+  if (!window._charts) { window._charts = {}; }
+  var id = canvasEl.id;
+  var prev = window._charts[id];
+  if (prev && typeof prev.destroy === 'function') { prev.destroy(); }
+  var colors = [
+    'rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)',
+    'rgba(75, 192, 192, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 159, 64, 0.6)'
+  ];
+  var cfg = {
+    type: 'pie',
+    data: { labels: labels, datasets: [{ label: title, data: data, backgroundColor: labels.map(function(_, i){ return colors[i % colors.length]; }) }] },
+    options: { responsive: false }
+  };
+  window._charts[id] = new Chart(canvasEl.getContext('2d'), cfg);
+}
+
+function renderTable(id, outEl, headers, rows) {
+  var table = document.getElementById(id);
+  if (!table) {
+    table = document.createElement('table');
+    table.id = id;
+    table.className = 'data-table';
+    if (outEl && outEl.parentNode) { outEl.parentNode.insertBefore(table, outEl.nextSibling); }
+    else { document.body.appendChild(table); }
+  }
+  var thead = table.querySelector('thead');
+  var tbody = table.querySelector('tbody');
+  if (!thead) { thead = document.createElement('thead'); table.appendChild(thead); }
+  if (!tbody) { tbody = document.createElement('tbody'); table.appendChild(tbody); }
+  thead.innerHTML = '';
+  tbody.innerHTML = '';
+  var trh = document.createElement('tr');
+  headers.forEach(function(h){ var th = document.createElement('th'); th.textContent = h; trh.appendChild(th); });
+  thead.appendChild(trh);
+  rows.forEach(function(r){ var tr = document.createElement('tr'); r.forEach(function(cell){ var td = document.createElement('td'); td.textContent = cell; tr.appendChild(td); }); tbody.appendChild(tr); });
+}
+
+function ensureStyles() {
+  if (document.getElementById('custom-ui-styles')) { return; }
+  var style = document.createElement('style');
+  style.id = 'custom-ui-styles';
+  style.textContent = [
+    '.kpi-wrap { display:flex; gap:8px; margin:8px 0; flex-wrap:wrap; }',
+    '.kpi { background:#f7f9fc; border:1px solid #e3e7ef; border-radius:8px; padding:8px 12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }',
+    '.kpi .label { font-size:12px; color:#6b7280; }',
+    '.kpi .value { font-size:16px; font-weight:600; color:#111827; }',
+    'canvas { display:block; margin:8px 0; background:#fff; border:1px solid #e5e7eb; border-radius:6px; }',
+    '.data-table { width:100%; border-collapse:collapse; margin:8px 0; font-size:14px; }',
+    '.data-table th, .data-table td { border:1px solid #e5e7eb; padding:6px 8px; text-align:left; }',
+    '.data-table thead th { background:#f3f4f6; font-weight:600; }',
+    '.data-table tbody tr:nth-child(odd) { background:#fafafa; }'
+  ].join('\n');
+  document.head.appendChild(style);
+}
+
+function renderKpis(id, outEl, items) {
+  var wrap = document.getElementById(id);
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = id;
+    wrap.className = 'kpi-wrap';
+    if (outEl && outEl.parentNode) { outEl.parentNode.insertBefore(wrap, outEl.nextSibling); }
+    else { document.body.appendChild(wrap); }
+  }
+  wrap.innerHTML = '';
+  items.forEach(function(item){
+    var el = document.createElement('div');
+    el.className = 'kpi';
+    var lab = document.createElement('div'); lab.className = 'label'; lab.textContent = item.label;
+    var val = document.createElement('div'); val.className = 'value'; val.textContent = item.value;
+    el.appendChild(lab); el.appendChild(val);
+    wrap.appendChild(el);
+  });
 }

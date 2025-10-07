@@ -374,3 +374,61 @@ Este endpoint lista los departamentos cuya cantidad de contrataciones en un año
   { "id": 7, "department": "Supply Chain", "hired": 45 }
 ]
 ```
+## Diagrama de arquitectura propuesta
+
+```mermaid
+flowchart TD
+  subgraph Cliente
+    B[Browser UI]
+    JS[static/ui.js + Chart.js CDN]
+  end
+  subgraph Servidor
+    U[Uvicorn]
+    F[FastAPI app (fast_api_con_rest.py)]
+    C[Controladores REST (/metricas, /respaldos, /transacciones)]
+    S[Servicios (lógica de métricas y backups)]
+    R[Repositorio (acceso a datos SQL/CSV)]
+    ST[Static (/ui + /static/ui.js)]
+  end
+  subgraph Almacenamiento
+    DB[(Base de Datos)]
+    FS[(Sistema de archivos 'respaldos/')]
+    CSV[(CSV inicial: departments.csv, jobs.csv, hired_employees.csv)]
+  end
+
+  B -->|X-API-Key| F
+  JS --> B
+  U --> F
+  F --> ST
+  F --> C
+  C --> S
+  S --> R
+  R --> DB
+  R --> FS
+  R --> CSV
+  B <-->|JSON| F
+```
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant F as FastAPI
+  participant S as Servicio
+  participant R as Repositorio
+  participant DB as Base de Datos
+  B->>F: GET /metricas/departamentos_sobre_promedio?anio=YYYY (X-API-Key)
+  F->>S: calcular departamentos > promedio
+  S->>R: consulta SQL agregada
+  R->>DB: SELECT con agregaciones
+  DB-->>R: filas {department, hired}
+  R-->>S: dataset
+  S-->>F: resultado JSON
+  F-->>B: 200 OK + JSON
+  B->>B: render KPIs + gráficos + tabla
+```
+
+Notas:
+- La UI se sirve desde `/ui` y carga `static/ui.js`; Chart.js se inyecta dinámicamente desde CDN.
+- El encabezado `X-API-Key` se usa para autenticar las operaciones.
+- Las métricas consultan datos agregados vía SQL; los respaldos usan el sistema de archivos en `respaldos/`.
+- Los CSV iniciales permiten poblar datos base (`departments.csv`, `jobs.csv`, `hired_employees.csv`).
