@@ -406,6 +406,69 @@ def healthz():
         raise HTTPException(status_code=503, detail=f"unhealthy: {e}")
 
 # =============================
+# Métricas trimestrales (Desafío #2)
+# =============================
+@app.get("/metricas/contrataciones_por_trimestre")
+def metricas_contrataciones_por_trimestre(anio: int, incluir_nulos: bool = False):
+    """Cantidad de empleados contratados en 'anio' por departamento y cargo, dividido por trimestre.
+
+    - Ordena alfabéticamente por departamento y luego por cargo.
+    - Si `incluir_nulos=true`, agrupa NULL como 'Sin asignar'.
+    - Requiere API key si está configurada (middleware global).
+    """
+    conexion = obtener_conexion_db()
+    try:
+        with conexion.cursor(cursor_factory=pgextras.RealDictCursor) as cur:
+            if incluir_nulos:
+                sql = (
+                    "SELECT "
+                    "  COALESCE(d.departamento, 'Sin asignar') AS department, "
+                    "  COALESCE(j.trabajo, 'Sin asignar') AS job, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 1 AND 3 THEN 1 ELSE 0 END) AS q1, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 4 AND 6 THEN 1 ELSE 0 END) AS q2, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 7 AND 9 THEN 1 ELSE 0 END) AS q3, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 10 AND 12 THEN 1 ELSE 0 END) AS q4 "
+                    "FROM empleados_contratados e "
+                    "LEFT JOIN departamentos d ON e.id_departamento = d.id "
+                    "LEFT JOIN trabajos j ON e.id_trabajo = j.id "
+                    "WHERE e.fecha_hora IS NOT NULL AND EXTRACT(YEAR FROM e.fecha_hora) = %s "
+                    "GROUP BY department, job "
+                    "ORDER BY department ASC, job ASC"
+                )
+                cur.execute(sql, (anio,))
+            else:
+                sql = (
+                    "SELECT "
+                    "  d.departamento AS department, "
+                    "  j.trabajo AS job, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 1 AND 3 THEN 1 ELSE 0 END) AS q1, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 4 AND 6 THEN 1 ELSE 0 END) AS q2, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 7 AND 9 THEN 1 ELSE 0 END) AS q3, "
+                    "  SUM(CASE WHEN EXTRACT(MONTH FROM e.fecha_hora) BETWEEN 10 AND 12 THEN 1 ELSE 0 END) AS q4 "
+                    "FROM empleados_contratados e "
+                    "JOIN departamentos d ON e.id_departamento = d.id "
+                    "JOIN trabajos j ON e.id_trabajo = j.id "
+                    "WHERE e.fecha_hora IS NOT NULL AND EXTRACT(YEAR FROM e.fecha_hora) = %s "
+                    "GROUP BY d.departamento, j.trabajo "
+                    "ORDER BY d.departamento ASC, j.trabajo ASC"
+                )
+                cur.execute(sql, (anio,))
+            filas = cur.fetchall()
+            return [
+                {
+                    "department": f.get("department"),
+                    "job": f.get("job"),
+                    "q1": int(f.get("q1", 0) or 0),
+                    "q2": int(f.get("q2", 0) or 0),
+                    "q3": int(f.get("q3", 0) or 0),
+                    "q4": int(f.get("q4", 0) or 0),
+                }
+                for f in filas
+            ]
+    finally:
+        conexion.close()
+
+# =============================
 # Restauración desde AVRO/PARQUET y verificación de respaldos
 # =============================
 def leer_avro_archivo(ruta_archivo: str) -> List[Dict[str, Any]]:

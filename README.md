@@ -180,6 +180,7 @@ Notas
 - `GET /respaldos/existe`: listar respaldos disponibles.
 - `DELETE /limpiar_tabla`: borrar una tabla si existen respaldos recientes.
 - `POST /restaurar`: restaurar una tabla desde un respaldo.
+- `GET /metricas/contrataciones_por_trimestre`: métricas del Desafío #2.
 
 ## Lotes y validaciones
 - Cada grupo en `/transacciones` acepta entre 1 y 1000 registros.
@@ -332,3 +333,24 @@ docker exec -it prueba_tecnica_db psql -U postgres -d prueba_tecnica
 - `401 Unauthorized`: revisa `X-API-Key` y que `API_KEY` esté definido.
 - Problemas con `requirements.txt`: valida compatibilidad de versiones (ej. `pydantic==2.8.2`) y reconstruye la imagen.
 - Conexión a Azure: revisa `DB_SSLMODE=require` y reglas de firewall.
+## Métricas del Desafío #2
+Este endpoint devuelve la cantidad de empleados contratados en un año por departamento y cargo, dividido en trimestres (Q1..Q4). La salida se ordena alfabéticamente por departamento y luego por cargo.
+
+- Endpoint:
+  - `GET /metricas/contrataciones_por_trimestre?anio=2023&incluir_nulos=false`
+- Parámetros:
+  - `anio` (entero, requerido): el año a analizar.
+  - `incluir_nulos` (booleano, opcional, por defecto `false`): si es `true`, agrupa registros con `id_departamento` o `id_trabajo` nulos bajo "Sin asignar".
+- Respuesta (ejemplo):
+
+```json
+[
+  { "department": "Staff", "job": "Recruiter", "q1": 3, "q2": 0, "q3": 7, "q4": 11 },
+  { "department": "Staff", "job": "Manager",   "q1": 2, "q2": 1, "q3": 0, "q4": 2 },
+  { "department": "Supply Chain", "job": "Manager", "q1": 0, "q2": 1, "q3": 3, "q4": 0 }
+]
+```
+
+Notas
+- Este endpoint requiere que `fecha_hora` esté presente en los registros para poder determinar el trimestre.
+- Si prefieres excluir filas con FKs nulas, usa `incluir_nulos=false` (por defecto).
