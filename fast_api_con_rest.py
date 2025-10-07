@@ -956,7 +956,7 @@ def _html_ui() -> str:
     .result { white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; padding: 12px; border-radius: 6px; }
     .small { color: #666; font-size: 12px; }
   </style>
-  <script src="/static/ui.js"></script>
+  <script src="/static/ui.js?v=2"></script>
   </head>
   <body>
     <h1>UI de Pruebas</h1>
@@ -1055,6 +1055,24 @@ def _html_ui() -> str:
       </div>
       <h3>Resultado</h3>
       <div id=\"rs-result\" class=\"result\"></div>
+    </div>
+
+    <div class=\"card\">
+      <h2>Métricas trimestrales</h2>
+      <div class=\"row\">
+        <div>
+          <label>Año</label>
+          <input id=\"mt-anio\" type=\"number\" placeholder=\"2020\" />
+        </div>
+        <div style=\"align-self:flex-end;\">
+          <label style=\"display:inline;\"><input id=\"mt-nulos\" type=\"checkbox\" /> Incluir nulos</label>
+        </div>
+      </div>
+      <div style=\"margin-top:8px;\">
+        <button class=\"btn\" onclick=\"consultarMetricasTrimestrales()\">Consultar /metricas/contrataciones_por_trimestre</button>
+      </div>
+      <h3>Resultado</h3>
+      <div id=\"mt-result\" class=\"result\"></div>
     </div>
 
   </body>

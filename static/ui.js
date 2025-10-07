@@ -202,3 +202,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Flujo de registro por email eliminado
+
+// Consultar métricas trimestrales
+function consultarMetricasTrimestrales() {
+  var apiKey = getApiKey();
+  var anioEl = document.getElementById('mt-anio');
+  var nulosEl = document.getElementById('mt-nulos');
+  var out = document.getElementById('mt-result');
+  var anio = (anioEl && anioEl.value) ? parseInt(anioEl.value, 10) : NaN;
+  var incluirNulos = !!(nulosEl && nulosEl.checked);
+  if (!anio || isNaN(anio)) { out.textContent = 'Error: ingrese un año válido'; return; }
+  var url = '/metricas/contrataciones_por_trimestre?anio=' + encodeURIComponent(anio) + '&incluir_nulos=' + (incluirNulos ? 'true' : 'false');
+  fetch(url, { headers: { 'X-API-Key': apiKey } })
+    .then(function(resp){ return resp.text().then(function(text){ return { status: resp.status, text: text }; }); })
+    .then(function(res){
+      try {
+        var data = JSON.parse(res.text);
+        if (!Array.isArray(data)) { out.textContent = 'HTTP ' + res.status + ' - ' + res.text; return; }
+        var lines = ['department, job, q1, q2, q3, q4'];
+        for (var i = 0; i < data.length; i++) {
+          var row = data[i];
+          lines.push([
+            String(row.department || ''),
+            String(row.job || ''),
+            String(row.q1 || 0),
+            String(row.q2 || 0),
+            String(row.q3 || 0),
+            String(row.q4 || 0)
+          ].join(', '));
+        }
+        out.textContent = lines.join('\n');
+      } catch (e) {
+        out.textContent = 'HTTP ' + res.status + ' - ' + res.text;
+      }
+    })
+    .catch(function(e){ out.textContent = 'Error: ' + e.message; });
+}
