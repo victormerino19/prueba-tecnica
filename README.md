@@ -1,6 +1,6 @@
 # Servicio de Ingesta de Datos (FastAPI + PostgreSQL)
 
-Este proyecto implementa un servicio REST para ingesta, validación, respaldo y restauración de datos en una base de datos SQL (PostgreSQL). Soporta cargas por lotes, validación con modelos de datos, reglas de calidad, y generación/restauración de respaldos en formatos AVRO o PARQUET.
+En esta Prueba de Concepto (PoC) se implementa un servicio REST para ingesta, validación, respaldo y restauración de datos en una base de datos SQL (PostgreSQL). Soporta cargas por lotes, validación con modelos de datos, reglas de calidad, y generación/restauración de respaldos en formatos AVRO o PARQUET.
 
 ## Descripción
 - Origen de datos: archivos CSV separados por comas y cargas REST en JSON.
