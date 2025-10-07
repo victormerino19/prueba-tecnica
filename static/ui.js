@@ -1,6 +1,15 @@
 // UI JS sin dependencias externas
 function getApiKey() {
-  try { return localStorage.getItem('apiKey') || ''; } catch (e) { return ''; }
+  // Tomar de localStorage o del campo de entrada si existe
+  try {
+    var stored = localStorage.getItem('apiKey') || '';
+    var input = document.getElementById('api-key-input');
+    var val = input ? (input.value || stored) : stored;
+    if (val && val !== stored) {
+      try { localStorage.setItem('apiKey', val); } catch (e) {}
+    }
+    return val || '';
+  } catch (e) { return ''; }
 }
 
 function postTransacciones() {
@@ -184,40 +193,12 @@ function loadSampleRespaldos() {
 
 document.addEventListener('DOMContentLoaded', function() {
   loadSamples();
-  // Intentar cargar apiKey desde un input oculto si existe
-  var hidden = document.getElementById('api-key-hidden');
-  if (hidden && hidden.value) {
-    try { localStorage.setItem('apiKey', hidden.value); } catch (e) {}
-  }
+  // Inicializar campo API key desde localStorage
+  try {
+    var key = localStorage.getItem('apiKey') || '';
+    var input = document.getElementById('api-key-input');
+    if (input && key) { input.value = key; }
+  } catch (e) {}
 });
 
-function registerUser() {
-  var emailEl = document.getElementById('reg-email');
-  var out = document.getElementById('reg-result');
-  var email = emailEl ? (emailEl.value || '').trim() : '';
-  if (!email || email.indexOf('@') === -1) {
-    if (out) out.textContent = 'Por favor, ingresa un email válido.';
-    return;
-  }
-  fetch('/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email })
-  })
-  .then(function(resp){ return resp.json().then(function(json){ return { status: resp.status, json: json }; }); })
-  .then(function(res){
-    if (!out) return;
-    if (res.status !== 200) {
-      out.textContent = 'HTTP ' + res.status + ' - ' + JSON.stringify(res.json);
-      return;
-    }
-    var key = res.json.api_key || '';
-    if (key) {
-      try { localStorage.setItem('apiKey', key); } catch (e) {}
-      out.textContent = 'API key generada y guardada. Usuario: ' + (res.json.user_email || email);
-    } else {
-      out.textContent = 'No se pudo obtener API key.';
-    }
-  })
-  .catch(function(e){ if (out) out.textContent = 'Error: ' + e.message; });
-}
+// Flujo de registro por email eliminado

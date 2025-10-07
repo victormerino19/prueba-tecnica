@@ -3,13 +3,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from datetime import datetime
 from fastapi import FastAPI, Body, HTTPException, Request, Depends
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from collections import defaultdict
 import time
-import secrets
 from pydantic import BaseModel, Field, constr, ValidationError
 import psycopg2
 import psycopg2.extras as pgextras
@@ -260,50 +259,73 @@ app.add_middleware(
 # Servir archivos estáticos (UI JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Exponer esquema de seguridad ApiKey en OpenAPI para facilitar pruebas desde Swagger
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Servicio de Ingesta de Datos",
+        version="1.0.0",
+        description="API de ingesta, respaldos y restauración de datos.",
+        routes=app.routes,
+    )
+    # Definir esquema de seguridad por API Key en cabecera
+    components = openapi_schema.setdefault("components", {})
+    security_schemes = components.setdefault("securitySchemes", {})
+    security_schemes["ApiKeyAuth"] = {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+    }
+    # Aplicar seguridad global a todas las operaciones (solo para UI de Swagger)
+    for path_item in openapi_schema.get("paths", {}).values():
+        for operation in path_item.values():
+            if isinstance(operation, dict):
+                sec = operation.get("security", [])
+                sec.append({"ApiKeyAuth": []})
+                operation["security"] = sec
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
 
 # =============================
-# Middleware de seguridad centralizado
+# Middleware de seguridad sencillo (opcional por API_KEY)
 # =============================
-class SecurityMiddleware(BaseHTTPMiddleware):
+class SimpleSecurityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        # Permitir libre acceso a rutas públicas
         path = request.url.path
-        if path.startswith('/ui') or path.startswith('/static') or path.startswith('/register'):
+        # Permitir libre acceso a UI estática y rutas de recursos del IDE
+        if (
+            path == '/'
+            or path.startswith('/ui')
+            or path.startswith('/static')
+            or path.startswith('/healthz')
+            or path.startswith('/@')  # p. ej. /@vite/client en vistas del IDE
+            or path.startswith('/docs')  # Swagger UI y sus assets
+            or path == '/openapi.json'   # Esquema OpenAPI consumido por Swagger
+            or path.startswith('/redoc') # Redoc UI
+        ):
             return await call_next(request)
 
-        # API Key validación contra DB
-        header_key = request.headers.get('x-api-key') or request.headers.get('X-API-Key')
-        if not header_key:
-            return PlainTextResponse('Unauthorized', status_code=401)
-
-        # Verificar clave en tabla api_keys
+        # Validación simple basada en variable de entorno API_KEY (si definida)
         try:
-            conexion = obtener_conexion_db()
-            try:
-                with conexion.cursor() as cursor:
-                    cursor.execute("SELECT enabled FROM api_keys WHERE api_key = %s LIMIT 1", (header_key,))
-                    row = cursor.fetchone()
-                    if not row or (row[0] is False):
-                        return PlainTextResponse('Unauthorized', status_code=401)
-                    # Actualizar última vez usada
-                    cursor.execute("UPDATE api_keys SET last_used_at = NOW() WHERE api_key = %s", (header_key,))
-                conexion.commit()
-            finally:
-                conexion.close()
-        except Exception:
-            # Si hay error de DB, negar acceso para no abrir huecos
-            return PlainTextResponse('Unauthorized', status_code=401)
+            api_key_required(request)
+        except HTTPException as e:
+            return PlainTextResponse(e.detail, status_code=e.status_code)
 
         # Rate limiting
         try:
-            # Reusar lógica existente de rate_limiter
             rate_limiter(request)
         except HTTPException as e:
             return PlainTextResponse(e.detail, status_code=e.status_code)
 
         return await call_next(request)
 
-app.add_middleware(SecurityMiddleware)
+app.add_middleware(SimpleSecurityMiddleware)
 
 
 def asegurar_esquema(conexion) -> None:
@@ -337,19 +359,7 @@ def asegurar_esquema(conexion) -> None:
                 );
                 """
             )
-            # Tabla de API keys por usuario
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS api_keys (
-                    id SERIAL PRIMARY KEY,
-                    user_email VARCHAR(255) UNIQUE NOT NULL,
-                    api_key VARCHAR(64) UNIQUE NOT NULL,
-                    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-                    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                    last_used_at TIMESTAMP NULL
-                );
-                """
-            )
+            # El esquema previo no incluye tabla de usuarios/api keys
         conexion.commit()
     except Exception as e:
         conexion.rollback()
@@ -416,37 +426,7 @@ def leer_parquet_archivo(ruta_archivo: str) -> List[Dict[str, Any]]:
         raise RuntimeError(f"Error leyendo PARQUET: {e}")
 
 
-# =============================
-# Registro de usuarios y emisión de API keys
-# =============================
-@app.post("/register")
-def register_user(payload: Dict[str, Any] = Body(..., description="Registra un usuario por email y devuelve API key")):
-    email = (payload or {}).get('email')
-    if not isinstance(email, str) or ('@' not in email) or (len(email.strip()) < 3):
-        raise HTTPException(status_code=400, detail="Email inválido")
-    email = email.strip().lower()
-    try:
-        conexion = obtener_conexion_db()
-        try:
-            with conexion.cursor() as cursor:
-                # Si existe y habilitada, devolver
-                cursor.execute("SELECT api_key, enabled FROM api_keys WHERE user_email = %s LIMIT 1", (email,))
-                row = cursor.fetchone()
-                if row:
-                    api_key, enabled = row[0], bool(row[1])
-                    return {"user_email": email, "api_key": api_key, "enabled": enabled}
-                # Generar nueva API key
-                new_key = secrets.token_hex(32)  # 64 hex chars
-                cursor.execute(
-                    "INSERT INTO api_keys (user_email, api_key, enabled) VALUES (%s, %s, TRUE)",
-                    (email, new_key)
-                )
-            conexion.commit()
-            return {"user_email": email, "api_key": new_key, "enabled": True}
-        finally:
-            conexion.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error registrando usuario: {e}")
+# Registro por email eliminado para restaurar comportamiento previo sin flujo de correo.
 
 
 def _listar_respaldos_por_tabla(tabla: str, directorio: str = "respaldos", solo_hoy: bool = False) -> Dict[str, Any]:
@@ -908,14 +888,11 @@ def _html_ui() -> str:
     <p class=\"small\">Probar endpoints de ingesta (/transacciones) y respaldos (/respaldos).</p>
 
     <div class=\"card\">
-      <h2>Registro</h2>
-      <label>Correo electrónico</label>
-      <input id=\"reg-email\" type=\"email\" placeholder=\"tu@correo.com\" />
-      <div style=\"margin-top:8px;\"> 
-        <button class=\"btn\" onclick=\"registerUser()\">Obtener API key</button>
-      </div>
-      <p class=\"small\">Tu API key se guarda localmente para las peticiones.</p>
-      <div id=\"reg-result\" class=\"result\" style=\"margin-top:8px;\"></div>
+      <h2>Autenticación</h2>
+      <p>Introduce tu API key si tu servidor la requiere.</p>
+      <label>API Key</label>
+      <input id=\"api-key-input\" type=\"text\" placeholder=\"{DEFAULT_API_KEY}\" value=\"{DEFAULT_API_KEY}\" />
+      <div style=\"margin-top:8px;\" class=\"small\">La API key se guarda localmente en tu navegador.</div>
     </div>
 
     <div class=\"card\">
@@ -1014,6 +991,12 @@ def _html_ui() -> str:
 @app.get("/ui", response_class=HTMLResponse)
 def ui_pruebas():
     return _html_ui()
+
+
+# Redirigir raíz a la UI para evitar 404 en vistas del IDE
+@app.get("/", include_in_schema=False)
+def root_redirect():
+    return RedirectResponse(url="/ui")
 
 
 # JavaScript externo para la UI
