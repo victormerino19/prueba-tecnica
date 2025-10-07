@@ -63,13 +63,25 @@ def obtener_conexion_db():
     Nota: Usa variables de entorno definidas en .env.
     """
     try:
-        conexion = psycopg2.connect(
-            dbname=os.getenv('DB_NAME'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            host=os.getenv('DB_HOST'),
-            port=os.getenv('DB_PORT'),
-        )
+        # Parámetros básicos
+        params = {
+            'dbname': os.getenv('DB_NAME'),
+            'user': os.getenv('DB_USER'),
+            'password': os.getenv('DB_PASSWORD'),
+            'host': os.getenv('DB_HOST'),
+            'port': os.getenv('DB_PORT'),
+        }
+
+        # Soporte SSL opcional (útil para Azure PostgreSQL)
+        sslmode = os.getenv('DB_SSLMODE')  # e.g., 'require', 'verify-ca', 'verify-full'
+        sslrootcert = os.getenv('DB_SSLROOTCERT')  # ruta a CA si se usa verificación
+        if sslmode:
+            params['sslmode'] = sslmode
+        if sslrootcert:
+            # No validamos existencia aquí para permitir rutas en contenedores/montajes
+            params['sslrootcert'] = sslrootcert
+
+        conexion = psycopg2.connect(**params)
         return conexion
     except Exception as e:
         raise RuntimeError(f"Error al conectar a la base de datos: {e}")

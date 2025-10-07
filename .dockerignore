@@ -21,6 +21,7 @@ venv/
 # Logs and temp files
 *.log
 *.txt
+!requirements.txt
 
 # Generated data and backups
 respaldos/

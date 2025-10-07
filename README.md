@@ -1,25 +1,26 @@
 # Servicio de Ingesta de Datos (FastAPI + PostgreSQL)
 
-En esta Prueba de Concepto (PoC) se implementa un servicio REST para ingesta, validación, respaldo y restauración de datos en una base de datos SQL (PostgreSQL). Soporta cargas por lotes, validación con modelos de datos, reglas de calidad, y generación/restauración de respaldos en formatos AVRO o PARQUET.
+Diseñé este servicio REST para ingesta, validación, respaldo y restauración de datos sobre PostgreSQL, con foco en trazabilidad y seguridad. Soporta cargas por lotes, validación con modelos de datos (Pydantic), reglas de calidad específicas, y generación/restauración de respaldos en AVRO o PARQUET. Mi objetivo fue que pudieras levantarlo rápido (Docker o local), probarlo desde Swagger o la UI, y auditar de forma clara qué se procesa y qué no.
 
 ## Descripción
-- Origen de datos: archivos CSV separados por comas y cargas REST en JSON.
-- Base de datos destino: PostgreSQL.
-- Funcionalidades: servicio REST con endpoints para ingesta, respaldo, restauración y borrado seguro.
-- Lenguaje: Python (FastAPI, Pydantic, psycopg2, pyarrow/fastavro).
+- Orígenes de datos: archivos CSV (para importaciones históricas) y cargas REST en JSON.
+- Destino: PostgreSQL (local, Docker o Azure PostgreSQL).
+- Funcionalidades: ingesta, validación, respaldos, restauración y borrado seguro condicionado a respaldos existentes.
+- Stack: Python (FastAPI, Pydantic, psycopg2, python-dotenv) y pyarrow/fastavro para formatos.
 
 Seguridad y acceso
-- Autenticación: API key en cabecera `X-API-Key` si `API_KEY` está definido en `.env`.
-- Rate limiting: ventana configurable por `RATE_LIMIT_WINDOW_SECONDS` y máximo `RATE_LIMIT_MAX_REQUESTS` por IP.
-- CORS: orígenes permitidos configurados con `ALLOWED_ORIGINS` en `.env` (coma separada o `*`).
-- UI: el JS ahora se sirve desde `GET /static/ui.js`. En la página `/ui` puedes introducir la API key. Opcionalmente, si defines `EXPOSE_API_KEY_IN_UI=true`, el campo se prellenará con el valor de `API_KEY` del `.env`.
+- Autenticación: API key vía cabecera `X-API-Key` si `API_KEY` está definido en `.env`.
+- Rate limiting: ventana `RATE_LIMIT_WINDOW_SECONDS` y máximo `RATE_LIMIT_MAX_REQUESTS` por IP.
+- CORS: orígenes permitidos con `ALLOWED_ORIGINS` (coma separada o `*`).
+- UI: sirvo el JS desde `GET /static/ui.js`. En `/ui` puedes introducir la API key; si defines `EXPOSE_API_KEY_IN_UI=true`, el campo se prellena con `API_KEY` (solo para demos, no producción).
 
 Variables en `.env`
 - `API_KEY="tu_clave_segura"`
-- `EXPOSE_API_KEY_IN_UI=false` (true para prellenar el campo en `/ui`)
-- `ALLOWED_ORIGINS="http://127.0.0.1:8000,http://localhost:8000"` (o `*` para todos)
+- `EXPOSE_API_KEY_IN_UI=false` (true para prellenar `/ui`)
+- `ALLOWED_ORIGINS="http://127.0.0.1:8000,http://localhost:8000"` (o `*`)
 - `RATE_LIMIT_WINDOW_SECONDS=60`
 - `RATE_LIMIT_MAX_REQUESTS=100`
+- `DB_SSLMODE=require` (para Azure PostgreSQL; opcional en local)
 
 Uso rápido con API key
 - Inicia el servidor: `py -m uvicorn fast_api_con_rest:app --host 127.0.0.1 --port 8000`.
@@ -38,14 +39,14 @@ Nota sobre UI estática
 - Paquetes Python: `fastapi`, `uvicorn`, `pydantic`, `psycopg2`, `python-dotenv`, `pyarrow`, `fastavro`.
 
 ## Docker y Docker Compose
-- Archivos incluidos:
-  - `Dockerfile`: define la imagen de la app.
-  - `docker-compose.yml`: orquesta `app` y `db` (PostgreSQL).
-  - `.env.example`: variables requeridas; copia a `.env` y ajusta valores.
+- Archivos:
+  - `Dockerfile`: imagen de la app.
+  - `docker-compose.yml`: orquesta `app` y `db` (PostgreSQL local).
+  - `.env.example`: referencia de variables; copia a `.env` y ajusta.
 
 ## Evaluación rápida
 
-Para facilitar la validación del evaluador, se recomiendan dos modos de ejecución. Ambos requieren copiar `.env.example` a `.env`.
+Para validar rápidamente el servicio, recomiendo dos modos de ejecución. En ambos casos, copia `.env.example` a `.env` primero.
 
 ### Opción A: Docker Compose (recomendado)
 
@@ -76,6 +77,7 @@ http://127.0.0.1:8000/docs
 ```
 
 4) En Swagger, pulsa “Authorize” y usa `X-API-Key=clave-demo-123`. La UI de pruebas está en `http://127.0.0.1:8000/ui` y prellenará la API key si `EXPOSE_API_KEY_IN_UI=true`.
+5) Valida endpoints de seguridad: sin `X-API-Key` verás `401`; con la clave correcta, acceso permitido. Healthcheck responde `ok` cuando la app y DB están accesibles.
 
 ### Opción B: Local (sin Docker)
 
@@ -102,15 +104,21 @@ py -m uvicorn fast_api_con_rest:app --host 127.0.0.1 --port 8000 --reload
 
 3) Verifica salud y usa Swagger/UI como en la opción A.
 
+Tips rápidos de validación
+- Health: `http://127.0.0.1:8000/healthz` → `ok`.
+- Swagger: `http://127.0.0.1:8000/docs`.
+- UI: `http://127.0.0.1:8000/ui`.
+- Seguridad: prueba `X-API-Key` correcto/incorrecto.
+
 ### Pruebas de datos y respaldos
 
-- Importar CSV históricos con lotes y `COPY FROM`:
+- Importo CSV históricos con lotes y `COPY FROM` con:
 
 ```
 py modelos.py
 ```
 
-- Generar respaldo por tabla desde la UI o con curl/PowerShell, y restaurar desde AVRO/PARQUET usando el endpoint `/restaurar`.
+- Genero respaldos por tabla desde la UI o con curl/PowerShell, y puedo restaurar desde AVRO/PARQUET con el endpoint `/restaurar`.
 
 ### Seguridad
 
@@ -146,7 +154,7 @@ py modelos.py
 
 Notas
 - El contenedor `app` monta el proyecto (`.:/app`) para desarrollo rápido.
-- En producción, elimina el volumen de proyecto y usa una imagen inmutable.
+- En producción, recomiendo no montar el proyecto y usar imágenes inmutables.
 - `.dockerignore` reduce el contexto de build y excluye `.env` y archivos generados.
 
 ## Configuración
@@ -175,11 +183,12 @@ Notas
 
 ## Lotes y validaciones
 - Cada grupo en `/transacciones` acepta entre 1 y 1000 registros.
-- Validación contra los modelos Pydantic:
-  - `departamentos`: `id > 0`, `departamento` longitud 1–50.
-  - `trabajos`: `id > 0`, `trabajo` longitud 1–200.
-  - `empleados_contratados`: `id > 0`, `nombre` opcional (≤100), `fecha_hora` ISO-8601 opcional, `id_departamento` e `id_trabajo` opcionales (`NULL` permitido). Si se envían, deben ser `> 0` y existir como FK.
-- UPSERT en lote con `page_size = 1090` para eficiencia.
+- Validación con Pydantic por tabla:
+  - `departamentos`: `id > 0`, `departamento` (1–50).
+  - `trabajos`: `id > 0`, `trabajo` (1–200).
+  - `empleados_contratados`: `id > 0`; `nombre` y `fecha_hora` son opcionales; `id_departamento` e `id_trabajo` son opcionales (permiten `NULL`), pero si vienen deben ser `> 0` y existir como FK.
+- Reglas de negocio: no inserto registros que no cumplan el esquema o las reglas de calidad. En su lugar, devuelvo un resumen con `errores_modelo` y/o `errores_calidad` en la respuesta del endpoint. Por defecto no persisto un log en disco/BD; si necesitas auditoría persistente, puedo habilitarla.
+- Inserción/actualización: uso UPSERT en lote con `page_size = 1090` para eficiencia.
 
 ## Respaldos y restauración
 - Para respaldos: se exporta el contenido completo de cada tabla (`SELECT *`).
@@ -251,6 +260,9 @@ Payload JSON para cargar departamentos, trabajos y empleados (con FKs nulas perm
 - En Swagger (`/docs`): usa "Try it out" en `POST /transacciones` y pega el JSON.
 - En la UI (`/ui`): hay acciones para generar respaldos, listar y restaurar.
 
+Validación de resultados
+- Tras enviar el payload, verás un objeto `resumen` con `procesados`, `validos`, `upsert` y una lista `errores` (cuando aplique). Solo los registros válidos se insertan/actualizan.
+
 ## Ejemplo de generación de respaldos
 - En la UI (`/ui`), sección "Generar respaldos": selecciona formato (parquet recomendado) y presiona el botón.
 - Respuesta muestra cantidad de registros y ruta de cada archivo creado en `respaldos/`.
@@ -263,3 +275,60 @@ Payload JSON para cargar departamentos, trabajos y empleados (con FKs nulas perm
 ## Solución de problemas
 - Errores tipo "input should be a valid integer" en restauración con AVRO: indica columnas FK con `null` y esquema AVRO sin tipo nulo. Usa PARQUET para estos casos.
 - Verifica `.env` y conectividad a PostgreSQL si el servidor no inicia.
+
+### Conexión a Azure PostgreSQL
+Uso el mismo servicio apuntando a Azure PostgreSQL (Flexible o Single Server) cambiando solo las variables de entorno. Azure requiere SSL; basta con `DB_SSLMODE=require` en la mayoría de escenarios.
+
+1) Configura `.env` para Azure:
+
+```
+DB_NAME=<tu_base_en_azure>
+DB_USER=<tu_usuario>@<tu_servidor>   # en Flexible, suele ser solo <usuario>
+DB_PASSWORD=<tu_password>
+DB_HOST=<tu_servidor>.postgres.database.azure.com
+DB_PORT=5432
+DB_SSLMODE=require
+API_KEY=clave-demo-123
+ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+```
+
+2) Asegura reglas de firewall en Azure para tu IP local.
+
+3) Arranca la app:
+- Local: `py -m uvicorn fast_api_con_rest:app --host 127.0.0.1 --port 8000`.
+- Docker (solo app): `docker run --rm -p 8000:8000 --env-file .env prueba-tecnica-app`.
+
+4) Valida salud:
+- `http://127.0.0.1:8000/healthz` debe responder `ok`.
+
+5) Prueba `/transacciones` y consulta en Azure con `psql` para verificar inserciones.
+
+### Consultas rápidas en PowerShell (psql)
+En Windows/PowerShell evita errores de escape (como `invalid command \SELECT`) usando comillas correctas cuando ejecutes `psql` dentro de Docker:
+
+- Comillas dobles simples (recomendado):
+
+```
+docker exec -it prueba_tecnica_db psql -U postgres -d prueba_tecnica -c "SELECT COUNT(*) FROM empleados_contratados;"
+```
+
+- Comillas simples en la consulta:
+
+```
+docker exec -it prueba_tecnica_db psql -U postgres -d prueba_tecnica -c 'SELECT COUNT(*) FROM empleados_contratados;'
+```
+
+Si prefieres sesión interactiva:
+
+```
+docker exec -it prueba_tecnica_db psql -U postgres -d prueba_tecnica
+\dt   -- listar tablas
+\d empleados_contratados   -- describir esquema
+\q   -- salir
+```
+
+### Errores comunes
+- `no configuration file provided: not found`: ejecuta `docker compose` desde la carpeta del proyecto o especifica el archivo con `-f ./docker-compose.yml`.
+- `401 Unauthorized`: revisa `X-API-Key` y que `API_KEY` esté definido.
+- Problemas con `requirements.txt`: valida compatibilidad de versiones (ej. `pydantic==2.8.2`) y reconstruye la imagen.
+- Conexión a Azure: revisa `DB_SSLMODE=require` y reglas de firewall.
